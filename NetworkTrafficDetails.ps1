@@ -1,0 +1,2 @@
+Get-NetTCPConnection -State Established | Select-Object -Property LocalAddress, LocalPort, @{Name='RemoteHostName'; Expression={(Resolve-DnsName $_.RemoteAddress).NameHost}}, RemoteAddress, RemotePort, State, @{Name='ProcessName'; Expression={(Get-Process -Id $_.OwningProcess).Path}} | Format-Table
+#This script fetches details about established TCP connections on your system, including local and remote addresses and ports, the remote host name, the state of the connection, and the process that owns the connection.
