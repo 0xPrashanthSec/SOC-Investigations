@@ -1,17 +1,40 @@
-# SOC Investigation PowerShell Scripts
+# SOC Investigations
+
+## Introduction
 
 This repository contains a collection of PowerShell scripts for Security Operations Center (SOC) investigations. Each script is designed to perform a specific task related to system and network security.
 
-## Scripts
+### AutoRuns
+##### Fetches details about programs that run automatically on system startup
+`Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Name, Command, Location, User`
 
-1. **LastLoginUsers.ps1**: Fetches the last login details of users.
-2. **DomainAccountSearch.ps1**: Searches for domain accounts.
-3. **FirewallChanges.ps1**: Monitors changes in firewall rules.
-4. **NetworkTraffic.ps1**: Monitors network traffic details with remote hosts.
-5. **OpenPorts.ps1**: Checks for open ports on a system.
-6. **ScheduledTasks.ps1**: Fetches details about scheduled tasks.
-7. **AutoRuns.ps1**: Fetches details about programs that run automatically on system startup.
+### DomainAccountSearch
+#### Searches for domain accounts
+##### Replace 'DOMAIN' and 'USERNAME' with actual values
+`Get-ADUser -Filter 'Name -like "*USERNAME*"' -Server 'DOMAIN'`
 
-## Usage
+### FirewallChanges
+#### Monitors changes in firewall rules
+`Get-NetFirewallRule | Where-Object { $_.Enabled -eq 'True' }`
 
-Each script can be run independently in a PowerShell environment. Make sure to run the scripts with appropriate permissions.
+### LastLoginUsers
+#### Fetches the last login details of users
+`Get-WmiObject -Class Win32_ComputerSystem | Select-Object UserName, LastLogin`
+
+### NetworkTraffic
+#### Monitors network traffic details with remote hosts
+`Get-NetTCPConnection | Where-Object { $_.State -eq 'Established' }`
+
+### NetworkTrafficDetails
+#### This script fetches details about established TCP connections on your system, including local and remote addresses and ports, the remote host name, the state of the connection, and the process that owns the connection.
+
+`Get-NetTCPConnection -State Established | Select-Object -Property LocalAddress, LocalPort, @{Name='RemoteHostName'; Expression={(Resolve-DnsName $_.RemoteAddress).NameHost}}, RemoteAddress, RemotePort, State, @{Name='ProcessName'; Expression={(Get-Process -Id $_.OwningProcess).Path}} | Format-Table`
+
+### OpenPorts
+#### Checks for open ports on a system
+##### Replace 'PORT' with actual value
+`Test-NetConnection -Port 'PORT'`
+
+### ScheduledTasks
+#### Fetches details about scheduled tasks
+`Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' }`
