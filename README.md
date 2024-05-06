@@ -50,4 +50,15 @@ Test-NetConnection -Port 'PORT'
 Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' }
 ```
 
+## 📦 InstalledPrograms
+**Mission:** Fetch details about installed programs and sort them by install date in descending order.
+```powershell
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, InstallDate | Sort-Object InstallDate -Descending
+```
+
+## 📝 ApplicationEvents
+**Mission:** Fetch application events specifically from the MsiInstaller with Id 1034 and format the output to display the time created and the message.
+```powershell
+Get-WinEvent -FilterHashtable @{LogName="Application"; ProviderName="MsiInstaller"; Id=1034} | Format-Table -Property TimeCreated, Message -AutoSize -Wrap
+```
 Welcome aboard, cyber sentinel! Your mission, should you choose to accept it, involves utilizing these scripts to safeguard your network. This README will self-update as we continue to add more tools to your arsenal. Good luck! 🍀
