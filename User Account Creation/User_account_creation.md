@@ -14,7 +14,7 @@
     
 **Remove User Account**
 
-    Remove-LocalUser -Name "daye-ontemp". 
+    Remove-LocalUser -Name "NewUser". 
 
 ## **Create local user account on host using Remote shell ( Mac/iOS)**
 
