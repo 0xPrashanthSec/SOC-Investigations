@@ -1,3 +1,20 @@
+# Create a Local User Account Using PowerShell
+
+**Define the username for the new account**
+
+    $Username = 'NewUser'
+
+**Define the password for the new account and convert it to a secure string**
+
+    $Password = ConvertTo-SecureString 'P@ssw0rd' -AsPlainText -Force
+
+**Create the new local user account with the defined username and password**
+
+    $UserAccount = New-LocalUser -Name $Username -Password $Password -FullName 'New User' -Description 'This is a new local user.'
+    
+**Remove User Account**
+
+    Remove-LocalUser -Name "daye-ontemp". 
 
 ## **Create local user account on host using Remote shell ( Mac/iOS)**
 
