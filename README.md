@@ -1,4 +1,4 @@
-# SOC Investigations: PowerShell Cybersecurity Toolkit
+# SOC Investigations: PowerShell Commands
 
 Welcome to the **SOC Investigations** repository. This collection of PowerShell scripts is designed to support **Security Operations Center (SOC)** investigations. Each script performs a specific task related to system and network security, providing actionable insights for analysts. Explore the scripts below to enhance your security operations.
 
