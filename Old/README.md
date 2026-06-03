@@ -1,102 +1,149 @@
-# Legacy SOC Investigation Commands
+# SOC Investigations: PowerShell Cybersecurity Toolkit
 
-This folder preserves the original SOC investigation reference material that existed before the toolkit was restructured into the current `Windows/`, `Linux/`, and `Mac/` folders.
+Welcome to the **SOC Investigations** repository. This collection of PowerShell scripts is designed to support **Security Operations Center (SOC)** investigations. Each script performs a specific task related to system and network security, providing actionable insights for analysts. Explore the scripts below to enhance your security operations.
 
-These files are kept for historical reference. **Use the scripts in the OS-specific folders for all active investigations.**
+## Table of Contents
+- [AutoRuns](#autoruns)
+- [DomainAccountSearch](#domainaccountsearch)
+- [FirewallChanges](#firewallchanges)
+- [LastLoginUsers](#lastloginusers)
+- [NetworkTraffic](#networktraffic)
+- [NetworkTrafficDetails](#networktrafficdetails)
+- [OpenPorts](#openports)
+- [ScheduledTasks](#scheduledtasks)
+- [InstalledPrograms](#installedprograms)
+- [ApplicationEvents](#applicationevents)
+- [RegistryChanges](#registrychanges)
+- [RunningServices](#runningservices)
+- [SuspiciousFiles](#suspiciousfiles)
+- [LogonSessions](#logonsessions)
+- [DNSQueries](#dnsqueries)
+- [SecurityEventLogs](#securityeventlogs)
+- [ProcessInjection](#processinjection)
+- [ExternalConnections](#externalconnections)
+- [PowerShellHistory](#powershellhistory)
+- [GeoIPTracking](#geoiptracking)
+- [Contribute](#contribute)
 
----
+## Scripts
 
-## What Was Here Originally
-
-### 1. Root-Level PowerShell One-Liners (`README.md`)
-
-The original repo was a single flat list of Windows PowerShell commands covering:
-
-| Command | Purpose |
-| ------- | ------- |
-| `Get-CimInstance Win32_StartupCommand` | AutoRuns — programs configured to start at boot |
-| `Get-ADUser` | Domain account search |
-| `Get-NetFirewallRule` | Active firewall rules |
-| `Get-WmiObject Win32_ComputerSystem` | Last login users |
-| `Get-NetTCPConnection` | Active network connections |
-| `Test-NetConnection` | Open port check |
-| `Get-ScheduledTask` | Scheduled tasks in Ready state |
-| `Get-ItemProperty HKLM:\...\Uninstall\*` | Installed programs by date |
-| `Get-WinEvent` | Application and security events |
-| `Get-ItemProperty HKLM:\...\Run` | Registry autorun keys |
-| `Get-Service` | Running services |
-| `Get-ChildItem` | Suspicious files (recent .exe/.ps1/.bat) |
-| `Get-CimInstance Win32_LogonSession` | Active logon sessions |
-| `Get-DnsClientCache` | Recent DNS queries |
-| `Get-WinEvent -Id 4625` | Failed login attempts |
-| `Get-Process` with module inspection | DLL injection detection |
-| `Get-NetTCPConnection` filtered | External network connections |
-| `Get-Content ConsoleHost_history.txt` | PowerShell command history |
-| `Invoke-RestMethod ip-api.com` | GeoIP lookup for remote IPs |
-
----
-
-### 2. NetworkInvestigationToolkit (`NetworkInvestigationToolkit/`)
-
-A PowerShell module (`NetworkInvestigationToolkit.psm1`) with reusable functions:
-
-| Function | Purpose |
-| -------- | ------- |
-| `Get-ExternalTCPConnections` | Lists established TCP connections excluding internal IPs |
-| `Get-SMBConnections` | Filters SMB port 445 connections from external IPs |
-| `Get-SMBGeoInfo` | Geolocates remote IPs connected via SMB |
-| `Get-SMBHostnames` | Resolves hostnames for SMB connections |
-| `Get-SmbSessionInfo` | Retrieves active SMB sessions |
-| `Get-SmbShareInfo` | Lists all SMB shares on the system |
-| `Get-ServerWorkstationServices` | Checks status of Server and Workstation services |
-
----
-
-### 3. User Account Creation (`User Account Creation/`)
-
-A reference guide for creating and removing user accounts covering:
-
-- **Windows:** `New-LocalUser`, `Remove-LocalUser`, password reset via `Set-LocalUser` and `Set-ADAccountPassword`
-- **macOS:** `dscl . -create /Users/<name>`, `dscl . -delete /Users/<name>`
-- Password resets for both local and domain accounts
-
----
-
-## Where the Upgraded Versions Live
-
-Everything above has been rewritten and expanded. Go here for active use:
-
-| Old content | Replaced by |
-| ----------- | ----------- |
-| Root `README.md` one-liners | `Windows/02_NetworkInvestigation.ps1`, `Windows/03_ProcessInvestigation.ps1`, `Windows/04_PersistenceInvestigation.ps1` |
-| `NetworkInvestigationToolkit/` | `Windows/NetworkInvestigationToolkit/` (same module, now properly placed) |
-| `User Account Creation/User_account_creation.md` | `Windows/UserAccountManagement.md`, `Linux/UserAccountManagement.md`, `Mac/UserAccountManagement.md` |
-
----
-
-## Current Toolkit Structure
-
-```text
-SOC-Investigations/
-├── Windows/    — PowerShell (.ps1), run as Administrator
-├── Linux/      — Bash (.sh), run as root or sudo
-├── Mac/        — Bash (.sh), run as root or sudo
-└── Old/        — This folder. Legacy reference only.
+### AutoRuns
+**Purpose**: Retrieves details about programs configured to run at system startup.  
+```powershell
+Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Name, Command, Location, User
+```
+### DomainAccountSearch
+Purpose: Searches for domain accounts. Replace DOMAIN and USERNAME with actual values.  
+```powershell
+Get-ADUser -Filter 'Name -like "*USERNAME*"' -Server 'DOMAIN'
+```
+### FirewallChanges
+Purpose: Monitors active firewall rules for changes.  
+```powershell
+Get-NetFirewallRule | Where-Object { $_.Enabled -eq 'True' }
+```
+### LastLoginUsers
+Purpose: Retrieves the last login details of users.  
+```powershell
+Get-WmiObject -Class Win32_ComputerSystem | Select-Object UserName, LastLogin
 ```
 
-Each OS folder contains scripts numbered `01` through `08`:
-
-```text
-01_InitialTriage          — System snapshot, logged-on users
-02_NetworkInvestigation   — External connections, ports, DNS, ARP
-03_ProcessInvestigation   — Suspicious processes, unsigned binaries
-04_PersistenceInvestigation — Run keys, cron, LaunchAgents, services
-05_FileInvestigation      — Temp dirs, dropped executables, SHA256 hashes
-06_LogCollection          — Auth logs, event IDs, export to disk
-07_UserAccountInvestigation — Accounts, admins, SSH keys, login history
-08_Remediation            — Kill, block, quarantine, isolate
+### NetworkTraffic
+Purpose: Monitors network traffic with established connections to remote hosts.  
+```powershell
+Get-NetTCPConnection | Where-Object { $_.State -eq 'Established' }
+```
+### NetworkTrafficDetails
+Purpose: Provides detailed information about established TCP connections, including addresses, ports, and owning processes.  
+```powershell
+Get-NetTCPConnection -State Established | Select-Object -Property LocalAddress, LocalPort, @{Name='RemoteHostName'; Expression={(Resolve-DnsName $_.RemoteAddress).NameHost}}, RemoteAddress, RemotePort, State, @{Name='ProcessName'; Expression={(Get-Process -Id $_.OwningProcess).Path}} | Format-Table
 ```
 
----
+### OpenPorts
+Purpose: Checks for open ports. Replace PORT with the target port number.  
+```powershell
+Test-NetConnection -Port 'PORT'
+```
+### ScheduledTasks
+Purpose: Lists scheduled tasks in a ready state.  
+```powershell
+Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' }
+```
 
-*These legacy files are not maintained. Do not use them for active incident response.*
+### InstalledPrograms
+Purpose: Retrieves installed programs, sorted by install date in descending order.  
+```powershell
+Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, InstallDate | Sort-Object InstallDate -Descending
+```
+
+### ApplicationEvents
+Purpose: Extracts application events from MsiInstaller (Event ID 1034) with timestamps and messages.  
+```powershell
+Get-WinEvent -FilterHashtable @{LogName="Application"; ProviderName="MsiInstaller"; Id=1034} | Format-Table -Property TimeCreated, Message -AutoSize -Wrap
+```
+
+### RegistryChanges
+Purpose: Monitors critical registry keys for unauthorized modifications.  
+```powershell
+Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" | Select-Object Name, Path
+```
+
+### RunningServices
+Purpose: Lists all running services and their details.  
+```powershell
+Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, ServiceType, StartType
+```
+
+### SuspiciousFiles
+Purpose: Identifies recently created files with suspicious extensions in common directories.  
+```powershell
+Get-ChildItem -Path "C:\Users", "C:\ProgramData" -Recurse -Include *.exe,*.bat,*.ps1 | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-7) } | Select-Object FullName, CreationTime, LastWriteTime
+```
+
+### LogonSessions
+Purpose: Retrieves details about active logon sessions.  
+```powershell
+Get-CimInstance -ClassName Win32_LogonSession | Select-Object LogonId, LogonType, AuthenticationPackage, StartTime
+```
+
+### DNSQueries
+Purpose: Monitors recent DNS queries to detect suspicious domain resolutions.  
+```powershell
+Get-DnsClientCache | Select-Object Entry, Name, Data, TimeToLive
+```
+### SecurityEventLogs
+Purpose: Retrieves recent failed login attempts (Event ID 4625) from security event logs.  
+```powershell
+Get-WinEvent -FilterHashtable @{LogName="Security"; Id=4625} -MaxEvents 50 | Select-Object TimeCreated, @{Name="Account"; Expression={$_.Properties[5].Value}}, @{Name="SourceIP"; Expression={$_.Properties[19].Value}}
+```
+
+### ProcessInjection
+Purpose: Detects processes with potential DLL injection by listing non-standard modules.  
+```powershell
+Get-Process | ForEach-Object { Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($_.Id)" | Select-Object ProcessName, @{Name="Modules"; Expression={(Get-Process -Id $_.ProcessId | Select-Object -ExpandProperty Modules | Where-Object { $_.FileName -notlike "C:\Windows\*" -and $_.FileName -notlike "C:\Program Files*"}).FileName}} } | Where-Object { $_.Modules }
+```
+
+### ExternalConnections
+Purpose: Lists processes with active external network connections.  
+```powershell
+Get-NetTCPConnection -State Established | Where-Object { $_.RemoteAddress -notlike "127.*" -and $_.RemoteAddress -notlike "192.168.*" } | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, @{Name="Process"; Expression={(Get-Process -Id $_.OwningProcess).Path}}
+```
+
+### PowerShellHistory
+Purpose: Retrieves recent PowerShell command history to detect unauthorized scripts.  
+```powershell
+Get-Content -Path "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" | Select-Object -Last 50
+```
+
+### GeoIPTracking
+Purpose: Resolves geolocation data for remote IPs in established connections.  
+```powershell
+Get-NetTCPConnection -State Established | Where-Object { $_.RemoteAddress -notlike "127.*" -and $_.RemoteAddress -notlike "192.168.*" } | ForEach-Object { $ip = $_.RemoteAddress; $geo = (Invoke-RestMethod -Uri "http://ip-api.com/json/$ip"); [PSCustomObject]@{ RemoteIP=$ip; Country=$geo.country; City=$geo.city; ISP=$geo.isp }}
+```
+
+### Contribute
+ - This repository is a growing resource for SOC analysts. To contribute new scripts, suggest improvements, or report issues:
+- Fork the repository.
+- Create a new branch for your changes.
+- Submit a pull request with a clear description of your updates.
+- Thank you for joining the mission to strengthen cybersecurity defenses. New tools will be added regularly to keep this toolkit sharp.
