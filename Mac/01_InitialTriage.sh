@@ -1,4 +1,12 @@
 #!/bin/bash
+# =============================================================
+# Author  : 0xPrashanthSec
+# GitHub  : https://github.com/0xPrashanthSec
+# Purpose : SOC Incident Response Toolkit
+# License : For authorized, safe, and educational use only.
+#           Do NOT run against systems you do not own or have
+#           explicit written permission to investigate.
+# =============================================================
 # SOC - macOS Initial Triage
 # Run FIRST on any suspected compromised Mac.
 # Captures identity, timing, active users, and system state.

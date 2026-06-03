@@ -1,4 +1,12 @@
 #!/bin/bash
+# =============================================================
+# Author  : 0xPrashanthSec
+# GitHub  : https://github.com/0xPrashanthSec
+# Purpose : SOC Incident Response Toolkit
+# License : For authorized, safe, and educational use only.
+#           Do NOT run against systems you do not own or have
+#           explicit written permission to investigate.
+# =============================================================
 # SOC - Linux User Account Investigation
 # Audits all user accounts, sudo access, SSH keys, and login history.
 # What to look for: accounts with UID 0 (other than root), unexpected sudo access,

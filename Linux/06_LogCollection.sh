@@ -1,4 +1,12 @@
 #!/bin/bash
+# =============================================================
+# Author  : 0xPrashanthSec
+# GitHub  : https://github.com/0xPrashanthSec
+# Purpose : SOC Incident Response Toolkit
+# License : For authorized, safe, and educational use only.
+#           Do NOT run against systems you do not own or have
+#           explicit written permission to investigate.
+# =============================================================
 # SOC - Linux Log Collection
 # Collects and analyzes key security logs.
 # Output is saved to /tmp/soc_logs_<timestamp>/ for export.
