@@ -47,15 +47,12 @@ SOC-Investigations/
 │   ├── 08_Remediation.sh
 │   └── UserAccountManagement.md
 │
-├── Old/                            Legacy reference material (do not use for active IR)
+├── Old/                            Legacy reference material 
 │   └── README.md
 │
 ├── NetworkInvestigationToolkit/    Original standalone PowerShell module (legacy)
-│   ├── NetworkInvestigationToolkit.psm1
-│   └── NetworkInvestigationToolkit.md
-│
-└── User Account Creation/          Original user account reference (legacy)
-    └── User_account_creation.md
+   ├── NetworkInvestigationToolkit.psm1
+    └── NetworkInvestigationToolkit.md
 ```
 
 ---
