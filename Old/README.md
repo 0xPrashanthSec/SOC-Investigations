@@ -1,150 +1,160 @@
-# SOC Investigations: PowerShell Commands
+# SOC Remote Investigation Toolkit
 
-Welcome to the **SOC Investigations** repository. This collection of PowerShell scripts is designed to support **Security Operations Center (SOC)** investigations. Each script performs a specific task related to system and network security, providing actionable insights for analysts. Explore the scripts below to enhance your security operations.
+A structured set of scripts for SOC analysts responding to incidents on remote client machines. Covers the full investigation lifecycle: **triage → network → processes → persistence → files → logs → users → remediation**, for all three major operating systems.
 
-## Table of Contents
-- [AutoRuns](#autoruns)
-- [DomainAccountSearch](#domainaccountsearch)
-- [FirewallChanges](#firewallchanges)
-- [LastLoginUsers](#lastloginusers)
-- [NetworkTraffic](#networktraffic)
-- [NetworkTrafficDetails](#networktrafficdetails)
-- [OpenPorts](#openports)
-- [ScheduledTasks](#scheduledtasks)
-- [InstalledPrograms](#installedprograms)
-- [ApplicationEvents](#applicationevents)
-- [RegistryChanges](#registrychanges)
-- [RunningServices](#runningservices)
-- [SuspiciousFiles](#suspiciousfiles)
-- [LogonSessions](#logonsessions)
-- [DNSQueries](#dnsqueries)
-- [SecurityEventLogs](#securityeventlogs)
-- [ProcessInjection](#processinjection)
-- [ExternalConnections](#externalconnections)
-- [PowerShellHistory](#powershellhistory)
-- [GeoIPTracking](#geoiptracking)
-- [Contribute](#contribute)
+---
 
-## Scripts
+## Structure
 
-### AutoRuns
-**Purpose**: Retrieves details about programs configured to run at system startup.  
-```powershell
-Get-CimInstance -ClassName Win32_StartupCommand | Select-Object Name, Command, Location, User
-```
-### DomainAccountSearch
-Purpose: Searches for domain accounts. Replace DOMAIN and USERNAME with actual values.  
-```powershell
-Get-ADUser -Filter 'Name -like "*USERNAME*"' -Server 'DOMAIN'
-```
-### FirewallChanges
-Purpose: Monitors active firewall rules for changes.  
-```powershell
-Get-NetFirewallRule | Where-Object { $_.Enabled -eq 'True' }
-```
-### LastLoginUsers
-Purpose: Retrieves the last login details of users.  
-```powershell
-Get-WmiObject -Class Win32_ComputerSystem | Select-Object UserName, LastLogin
+```text
+SOC-Investigations/
+├── Windows/     PowerShell scripts (.ps1) — run as Administrator
+├── Linux/       Bash scripts (.sh)        — run as root or sudo
+└── Mac/         Bash scripts (.sh)        — run as root or sudo
 ```
 
-### NetworkTraffic
-Purpose: Monitors network traffic with established connections to remote hosts.  
+---
+
+## Investigation Workflow
+
+Follow the scripts in numbered order. Each script tells you what to look for and ends with a prompt to move to the next step.
+
+| # | Script | What it does |
+| --- | ------ | ------------ |
+| 01 | `InitialTriage` | System identity, uptime, logged-on users, recent logins, top processes |
+| 02 | `NetworkInvestigation` | External connections, listening ports, DNS cache, ARP, SMB, firewall |
+| 03 | `ProcessInvestigation` | Running processes, suspicious paths, unsigned binaries, DLL/dylib injection |
+| 04 | `PersistenceInvestigation` | Registry run keys, scheduled tasks, services, cron, LaunchAgents, shell profiles |
+| 05 | `FileInvestigation` | Suspicious files in temp dirs, recently dropped executables, hashes for VirusTotal |
+| 06 | `LogCollection` | Security event logs, authentication logs, exports to disk for offline analysis |
+| 07 | `UserAccountInvestigation` | All accounts, admin members, SSH keys, failed logins, account creation |
+| 08 | `Remediation` | Kill process, block IP, quarantine file, disable service, isolate machine |
+
+---
+
+## Windows
+
+**Requirements:** PowerShell 5.1+, run as **Administrator**.
+
 ```powershell
-Get-NetTCPConnection | Where-Object { $_.State -eq 'Established' }
-```
-### NetworkTrafficDetails
-Purpose: Provides detailed information about established TCP connections, including addresses, ports, and owning processes.  
-```powershell
-Get-NetTCPConnection -State Established | Select-Object -Property LocalAddress, LocalPort, @{Name='RemoteHostName'; Expression={(Resolve-DnsName $_.RemoteAddress).NameHost}}, RemoteAddress, RemotePort, State, @{Name='ProcessName'; Expression={(Get-Process -Id $_.OwningProcess).Path}} | Format-Table
+# Run from PowerShell (Admin)
+cd Windows\
+.\01_InitialTriage.ps1
+.\02_NetworkInvestigation.ps1
+.\03_ProcessInvestigation.ps1
+.\04_PersistenceInvestigation.ps1
+.\05_FileInvestigation.ps1                         # or: .\05_FileInvestigation.ps1 -TargetFile "C:\path\to\file.exe"
+.\06_LogCollection.ps1                             # exports CSV to C:\SOC_Logs_<timestamp>\
+.\07_UserAccountInvestigation.ps1
+.\08_Remediation.ps1 -BlockIP 1.2.3.4             # See script header for all options
 ```
 
-### OpenPorts
-Purpose: Checks for open ports. Replace PORT with the target port number.  
+**Remediation options:**
+
 ```powershell
-Test-NetConnection -Port 'PORT'
-```
-### ScheduledTasks
-Purpose: Lists scheduled tasks in a ready state.  
-```powershell
-Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' }
+.\08_Remediation.ps1 -KillPID 1234
+.\08_Remediation.ps1 -KillName "malware.exe"
+.\08_Remediation.ps1 -DisableService "EvilSvc"
+.\08_Remediation.ps1 -RemoveTask "EvilTask"
+.\08_Remediation.ps1 -BlockIP "1.2.3.4"
+.\08_Remediation.ps1 -QuarantineFile "C:\Temp\evil.exe"
+.\08_Remediation.ps1 -DisableUser "compromised_user"
+.\08_Remediation.ps1 -IsolateMachine              # NUCLEAR: blocks all traffic via Windows Firewall
 ```
 
-### InstalledPrograms
-Purpose: Retrieves installed programs, sorted by install date in descending order.  
+**NetworkInvestigationToolkit** (reusable PowerShell module):
+
 ```powershell
-Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, InstallDate | Sort-Object InstallDate -Descending
+Import-Module .\Windows\NetworkInvestigationToolkit\NetworkInvestigationToolkit.psm1
+Get-ExternalTCPConnections
+Get-SMBConnections
+Get-SMBGeoInfo
 ```
 
-### ApplicationEvents
-Purpose: Extracts application events from MsiInstaller (Event ID 1034) with timestamps and messages.  
-```powershell
-Get-WinEvent -FilterHashtable @{LogName="Application"; ProviderName="MsiInstaller"; Id=1034} | Format-Table -Property TimeCreated, Message -AutoSize -Wrap
+---
+
+## Linux
+
+**Requirements:** Bash, run as **root** or with **sudo**.
+
+```bash
+cd Linux/
+sudo ./01_InitialTriage.sh
+sudo ./02_NetworkInvestigation.sh
+sudo ./03_ProcessInvestigation.sh
+sudo ./04_PersistenceInvestigation.sh
+sudo ./05_FileInvestigation.sh                     # or: sudo ./05_FileInvestigation.sh /path/to/file
+sudo ./06_LogCollection.sh                         # exports to /tmp/soc_logs_<timestamp>/
+sudo ./07_UserAccountInvestigation.sh
+sudo ./08_Remediation.sh                           # run with no args to see all options
 ```
 
-### RegistryChanges
-Purpose: Monitors critical registry keys for unauthorized modifications.  
-```powershell
-Get-ItemProperty -Path "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run" | Select-Object Name, Path
+**Remediation options:**
+
+```bash
+sudo ./08_Remediation.sh kill_pid 1234
+sudo ./08_Remediation.sh kill_name malware
+sudo ./08_Remediation.sh block_ip 1.2.3.4
+sudo ./08_Remediation.sh disable_service evil_svc
+sudo ./08_Remediation.sh remove_cron root "/tmp/evil.sh"
+sudo ./08_Remediation.sh lock_user baduser
+sudo ./08_Remediation.sh quarantine /tmp/evil.elf
+sudo ./08_Remediation.sh isolate                   # NUCLEAR: blocks all new connections via iptables
 ```
 
-### RunningServices
-Purpose: Lists all running services and their details.  
-```powershell
-Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name, DisplayName, ServiceType, StartType
+---
+
+## Mac
+
+**Requirements:** Bash, run as **root** or with **sudo**. Full output may require SIP-disabled or MDM-enrolled device.
+
+```bash
+cd Mac/
+sudo ./01_InitialTriage.sh
+sudo ./02_NetworkInvestigation.sh
+sudo ./03_ProcessInvestigation.sh
+sudo ./04_PersistenceInvestigation.sh
+sudo ./05_FileInvestigation.sh                     # or: sudo ./05_FileInvestigation.sh /path/to/file
+sudo ./06_LogCollection.sh                         # exports to /tmp/soc_logs_<timestamp>/
+sudo ./07_UserAccountInvestigation.sh
+sudo ./08_Remediation.sh                           # run with no args to see all options
 ```
 
-### SuspiciousFiles
-Purpose: Identifies recently created files with suspicious extensions in common directories.  
-```powershell
-Get-ChildItem -Path "C:\Users", "C:\ProgramData" -Recurse -Include *.exe,*.bat,*.ps1 | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-7) } | Select-Object FullName, CreationTime, LastWriteTime
+**Remediation options:**
+
+```bash
+sudo ./08_Remediation.sh kill_pid 1234
+sudo ./08_Remediation.sh kill_name malware
+sudo ./08_Remediation.sh block_ip 1.2.3.4
+sudo ./08_Remediation.sh remove_launch "/Library/LaunchAgents/evil.plist"
+sudo ./08_Remediation.sh lock_user baduser
+sudo ./08_Remediation.sh quarantine /tmp/evil.app
+sudo ./08_Remediation.sh isolate                   # NUCLEAR: blocks all new connections via pf
 ```
 
-### LogonSessions
-Purpose: Retrieves details about active logon sessions.  
-```powershell
-Get-CimInstance -ClassName Win32_LogonSession | Select-Object LogonId, LogonType, AuthenticationPackage, StartTime
-```
+---
 
-### DNSQueries
-Purpose: Monitors recent DNS queries to detect suspicious domain resolutions.  
-```powershell
-Get-DnsClientCache | Select-Object Entry, Name, Data, TimeToLive
-```
-### SecurityEventLogs
-Purpose: Retrieves recent failed login attempts (Event ID 4625) from security event logs.  
-```powershell
-Get-WinEvent -FilterHashtable @{LogName="Security"; Id=4625} -MaxEvents 50 | Select-Object TimeCreated, @{Name="Account"; Expression={$_.Properties[5].Value}}, @{Name="SourceIP"; Expression={$_.Properties[19].Value}}
-```
+## Key Indicators to Watch For
 
-### ProcessInjection
-Purpose: Detects processes with potential DLL injection by listing non-standard modules.  
-```powershell
-Get-Process | ForEach-Object { Get-CimInstance -ClassName Win32_Process -Filter "ProcessId = $($_.Id)" | Select-Object ProcessName, @{Name="Modules"; Expression={(Get-Process -Id $_.ProcessId | Select-Object -ExpandProperty Modules | Where-Object { $_.FileName -notlike "C:\Windows\*" -and $_.FileName -notlike "C:\Program Files*"}).FileName}} } | Where-Object { $_.Modules }
-```
+| Category | Windows | Linux | Mac |
+| -------- | ------- | ----- | --- |
+| Suspicious process paths | `\Temp\`, `\AppData\`, `\Downloads\` | `/tmp/`, `/dev/shm/`, `/var/tmp/` | `/tmp/`, `/private/tmp/`, `Downloads/` |
+| Persistence locations | `HKLM\Run`, Scheduled Tasks, Services | cron, systemd, `~/.bashrc`, LD_PRELOAD | LaunchAgents, LaunchDaemons, login hooks |
+| Unsigned binaries | `Get-AuthenticodeSignature` | `file` + `strings` | `codesign -v`, `spctl --assess` |
+| Deleted executables | Prefetch, USN Journal | `/proc/*/exe (deleted)` | N/A (use Spotlight logs) |
+| Lateral movement | SMB (port 445), RDP (4624 Type 10) | SSH from unusual IPs | SSH, Screen Sharing |
+| Log clearance | Event ID 1102 (Security log cleared) | `/var/log/auth.log` gaps | Unified log gaps |
+| Persistence via SSH | N/A | `~/.ssh/authorized_keys` | `~/.ssh/authorized_keys` |
 
-### ExternalConnections
-Purpose: Lists processes with active external network connections.  
-```powershell
-Get-NetTCPConnection -State Established | Where-Object { $_.RemoteAddress -notlike "127.*" -and $_.RemoteAddress -notlike "192.168.*" } | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort, @{Name="Process"; Expression={(Get-Process -Id $_.OwningProcess).Path}}
-```
+---
 
-### PowerShellHistory
-Purpose: Retrieves recent PowerShell command history to detect unauthorized scripts.  
-```powershell
-Get-Content -Path "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt" | Select-Object -Last 50
-```
+## Collect Evidence Before Remediating
 
-### GeoIPTracking
-Purpose: Resolves geolocation data for remote IPs in established connections.  
-```powershell
-Get-NetTCPConnection -State Established | Where-Object { $_.RemoteAddress -notlike "127.*" -and $_.RemoteAddress -notlike "192.168.*" } | ForEach-Object { $ip = $_.RemoteAddress; $geo = (Invoke-RestMethod -Uri "http://ip-api.com/json/$ip"); [PSCustomObject]@{ RemoteIP=$ip; Country=$geo.country; City=$geo.city; ISP=$geo.isp }}
-```
+1. Run scripts 01–07 and save all output to a timestamped folder
+2. Hash all suspicious files with SHA256 before quarantine
+3. Export event logs before isolating the machine
+4. Document every action taken with timestamp and authorizing analyst
 
-### Contribute
- - This repository is a growing resource for SOC analysts. To contribute new scripts, suggest improvements, or report issues:
-- Fork the repository.
-- Create a new branch for your changes.
-- Submit a pull request with a clear description of your updates.
-- Thank you for joining the mission to strengthen cybersecurity defenses. New tools will be added regularly to keep this toolkit sharp.
+---
 
+*Maintained by the SOC team. Add new scripts via pull request with a clear description.*
