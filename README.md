@@ -47,11 +47,18 @@ SOC-Investigations/
 │   ├── 08_Remediation.sh
 │   └── UserAccountManagement.md
 │
-├── Old/                            Legacy reference material 
+├── .github/
+│   ├── workflows/
+│   │   ├── powershell.yml          PSScriptAnalyzer — lints all .ps1 files on push/PR
+│   │   ├── label.yml               Auto-labels PRs by changed folder (Windows/Linux/Mac)
+│   │   └── greetings.yml           Welcomes first-time contributors
+│   └── labeler.yml                 Label routing config for label.yml
+│
+├── Old/                            Legacy reference material
 │   └── README.md
 │
-├── NetworkInvestigationToolkit/    Original standalone PowerShell module (legacy)
-   ├── NetworkInvestigationToolkit.psm1
+└── NetworkInvestigationToolkit/    Original standalone PowerShell module (legacy)
+    ├── NetworkInvestigationToolkit.psm1
     └── NetworkInvestigationToolkit.md
 ```
 
@@ -70,7 +77,7 @@ Run scripts in numbered order on the target machine. Each script outputs what to
 | 05 | `FileInvestigation` | Recent executables in temp dirs, ADS streams, mismatched extensions, SHA256 hashes |
 | 06 | `LogCollection` | Auth logs, security event IDs, PowerShell logs — all exported to timestamped folder |
 | 07 | `UserAccountInvestigation` | All accounts, admin group members, SSH keys, failed login counts |
-| 08 | `Remediation` | Kill process, block IP, quarantine file, disable service, isolate machine |
+| 08 | `Remediation` | Kill process, block IP, quarantine file, disable service, isolate machine — interactive menu when run with no args |
 
 ---
 
@@ -87,7 +94,7 @@ cd Windows\
 .\05_FileInvestigation.ps1
 .\06_LogCollection.ps1                   # Exports CSV files to C:\SOC_Logs_<timestamp>\
 .\07_UserAccountInvestigation.ps1
-.\08_Remediation.ps1                     # Run with no args to see all options
+.\08_Remediation.ps1                     # No args: shows warning banner + interactive menu
 ```
 
 **Investigate a specific file:**
@@ -98,7 +105,10 @@ cd Windows\
 
 **Remediation options:**
 
+> **Warning:** `08_Remediation.ps1` makes permanent, potentially irreversible changes. It always displays a warning banner and requires explicit confirmation before executing. Running with no arguments launches an interactive numbered menu so you can select and configure the action interactively.
+
 ```powershell
+.\08_Remediation.ps1                                          # Interactive menu
 .\08_Remediation.ps1 -KillPID 1234
 .\08_Remediation.ps1 -KillName "malware.exe"
 .\08_Remediation.ps1 -DisableService "EvilService"
@@ -108,7 +118,7 @@ cd Windows\
 .\08_Remediation.ps1 -QuarantineFile "C:\Temp\evil.exe"
 .\08_Remediation.ps1 -DisableUser "compromised_user"
 .\08_Remediation.ps1 -RemoveWMISub "EvilFilter"
-.\08_Remediation.ps1 -IsolateMachine
+.\08_Remediation.ps1 -IsolateMachine                          # Blocks ALL network traffic
 ```
 
 **NetworkInvestigationToolkit — reusable PowerShell module:**
@@ -226,6 +236,20 @@ sudo ./08_Remediation.sh isolate
 
 ---
 
+## CI / Code Quality
+
+All pull requests are automatically checked by GitHub Actions:
+
+| Workflow | What it does |
+| -------- | ------------ |
+| **PSScriptAnalyzer** | Lints every `.ps1` file for syntax errors and security rules on every push and PR to `main` |
+| **Labeler** | Automatically applies `Windows` / `Linux` / `Mac` / `documentation` / `CI/CD` labels to PRs based on which folders were changed |
+| **Greetings** | Welcomes first-time contributors when they open their first issue or PR |
+
+PRs should pass PSScriptAnalyzer before merging.
+
+---
+
 ## Evidence Collection Rules
 
 1. **Run 01–07 first** — collect and save all output before taking any action
@@ -242,4 +266,4 @@ The `Old/`, `NetworkInvestigationToolkit/`, and `User Account Creation/` folders
 
 ---
 
-*Maintained by the SOC team. Submit new scripts or improvements via pull request.*
+*Maintained by [@0xPrashanthSec](https://github.com/0xPrashanthSec). Submit new scripts or improvements via pull request.*
