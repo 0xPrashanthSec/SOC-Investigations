@@ -65,7 +65,7 @@ Write-Host "[4] FILES WITH MISMATCHED EXTENSIONS" -ForegroundColor Cyan
 # e.g., a PE binary renamed to .pdf or .docx
 $checkPaths = @("C:\Users\$env:USERNAME\Downloads", "C:\Users\$env:USERNAME\Desktop",
                 "$env:TEMP", "C:\ProgramData")
-foreach ($path in $checkPaths) {
+$(foreach ($path in $checkPaths) {
     Get-ChildItem -Path $path -Recurse -EA SilentlyContinue -File |
         Where-Object { $_.Extension -in @('.pdf','.docx','.xlsx','.jpg','.png','.txt') } |
         ForEach-Object {
@@ -76,7 +76,7 @@ foreach ($path in $checkPaths) {
                 [PSCustomObject]@{File=$_.FullName; Extension=$_.Extension; MagicBytes=$hex; Verdict="PE binary with wrong extension!"}
             }
         }
-} | Format-Table -AutoSize
+}) | Format-Table -AutoSize
 
 # ----------------------------------------------------------
 Write-Host "[5] POWERSHELL HISTORY (all users)" -ForegroundColor Cyan

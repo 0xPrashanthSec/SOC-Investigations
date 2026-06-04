@@ -45,13 +45,88 @@ $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss")
 Write-Host "`n=====================================================" -ForegroundColor Red
 Write-Host "  SOC REMEDIATION  |  $ts UTC"                          -ForegroundColor Red
 Write-Host "=====================================================`n" -ForegroundColor Red
+
+Write-Host "  !!  WARNING — DESTRUCTIVE ACTIONS AHEAD  !!" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  This script makes PERMANENT, potentially irreversible" -ForegroundColor Yellow
+Write-Host "  changes to the system:" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "    Kill processes      Block IPs via firewall" -ForegroundColor DarkYellow
+Write-Host "    Disable services    Move / quarantine files" -ForegroundColor DarkYellow
+Write-Host "    Delete reg keys     Disable user accounts" -ForegroundColor DarkYellow
+Write-Host "    Remove WMI subs     FULL network isolation" -ForegroundColor DarkYellow
+Write-Host ""
+Write-Host "  Only proceed if you are FULLY AUTHORIZED, have change" -ForegroundColor Yellow
+Write-Host "  approval, and are 100%% certain of what you are doing." -ForegroundColor Yellow
+Write-Host "  All actions are logged to C:\SOC_Remediation_<date>.log" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  Press Ctrl+C at ANY time to abort without making changes." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "=====================================================" -ForegroundColor Red
+Write-Host ""
+
+$proceed = Read-Host "  I understand the risks and I am authorized to proceed (yes/no)"
+if ($proceed -ne "yes") {
+    Write-Host "`n  Aborted. No changes made.`n" -ForegroundColor DarkGray
+    exit 0
+}
+
+Write-Host ""
 Write-Host "  ACTION LOG - All changes recorded below" -ForegroundColor Yellow
 
 function Log-Action {
     param([string]$Action, [string]$Detail)
-    $entry = "[$((Get-Date -Format 'HH:mm:ss')] $Action | $Detail"
+    $entry = "[$((Get-Date -Format 'HH:mm:ss'))] $Action | $Detail"
     Write-Host $entry -ForegroundColor Green
     Add-Content -Path "C:\SOC_Remediation_$(Get-Date -Format 'yyyyMMdd').log" -Value $entry
+}
+
+# ----------------------------------------------------------
+# INTERACTIVE MENU — shown when no parameters are supplied
+# ----------------------------------------------------------
+$noParams = ($KillPID -eq 0 -and $KillName -eq "" -and $DisableService -eq "" -and
+             $RemoveTask -eq "" -and $RemoveRunKey -eq "" -and $BlockIP -eq "" -and
+             $QuarantineFile -eq "" -and $DisableUser -eq "" -and $RemoveWMISub -eq "" -and
+             -not $IsolateMachine)
+
+if ($noParams) {
+    Write-Host ""
+    Write-Host "  Select a remediation action:" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "   [1]  Kill process by PID"                           -ForegroundColor White
+    Write-Host "   [2]  Kill process by name"                          -ForegroundColor White
+    Write-Host "   [3]  Disable and stop a service"                    -ForegroundColor White
+    Write-Host "   [4]  Remove a scheduled task"                       -ForegroundColor White
+    Write-Host "   [5]  Remove a registry Run key entry"               -ForegroundColor White
+    Write-Host "   [6]  Block an IP address (firewall rule)"           -ForegroundColor White
+    Write-Host "   [7]  Quarantine a file"                             -ForegroundColor White
+    Write-Host "   [8]  Disable a local user account"                  -ForegroundColor White
+    Write-Host "   [9]  Remove a WMI event subscription"               -ForegroundColor White
+    Write-Host "   [10] ISOLATE MACHINE — blocks ALL network traffic"  -ForegroundColor Red
+    Write-Host "   [0]  Exit / Cancel"                                 -ForegroundColor DarkGray
+    Write-Host ""
+    $choice = Read-Host "  Choice"
+    Write-Host ""
+
+    switch ($choice) {
+        "1"  { $KillPID        = [int](Read-Host "  Enter PID to kill") }
+        "2"  { $KillName       = Read-Host "  Enter process name to kill" }
+        "3"  { $DisableService = Read-Host "  Enter service name to disable" }
+        "4"  { $RemoveTask     = Read-Host "  Enter scheduled task name to remove" }
+        "5"  {
+                $RemoveRunKey  = Read-Host "  Enter hive (HKCU or HKLM)"
+                $RunKeyName    = Read-Host "  Enter Run key entry name"
+             }
+        "6"  { $BlockIP        = Read-Host "  Enter IP address to block" }
+        "7"  { $QuarantineFile = Read-Host "  Enter full file path to quarantine" }
+        "8"  { $DisableUser    = Read-Host "  Enter username to disable" }
+        "9"  { $RemoveWMISub   = Read-Host "  Enter WMI filter name to remove" }
+        "10" { $IsolateMachine = $true }
+        default {
+            Write-Host "  Exiting. No action taken.`n" -ForegroundColor DarkGray
+            exit 0
+        }
+    }
 }
 
 # ----------------------------------------------------------

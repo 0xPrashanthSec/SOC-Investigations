@@ -118,13 +118,13 @@ $extIPs = Get-NetTCPConnection -State Established |
         $_.RemoteAddress -ne "::1" -and $_.RemoteAddress -ne "0.0.0.0"
     } | Select-Object -ExpandProperty RemoteAddress -Unique
 
-foreach ($ip in $extIPs) {
+$(foreach ($ip in $extIPs) {
     try {
         $geo = Invoke-RestMethod -Uri "http://ip-api.com/json/$ip" -TimeoutSec 5
         [PSCustomObject]@{IP=$ip; Country=$geo.country; City=$geo.city; ISP=$geo.isp; Org=$geo.org}
     } catch {
         [PSCustomObject]@{IP=$ip; Country="Lookup failed"; City=""; ISP=""; Org=""}
     }
-} | Format-Table -AutoSize
+}) | Format-Table -AutoSize
 
 Write-Host "`n[NETWORK DONE] => Run 03_ProcessInvestigation.ps1 next`n" -ForegroundColor Green

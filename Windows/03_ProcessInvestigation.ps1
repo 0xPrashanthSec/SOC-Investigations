@@ -58,7 +58,7 @@ $extConns = Get-NetTCPConnection -State Established |
         $_.RemoteAddress -notmatch "^127\." -and $_.RemoteAddress -notmatch "^192\.168\." -and
         $_.RemoteAddress -notmatch "^10\." -and $_.RemoteAddress -ne "::1" -and $_.RemoteAddress -ne "0.0.0.0"
     }
-foreach ($conn in $extConns) {
+$(foreach ($conn in $extConns) {
     $proc = Get-Process -Id $conn.OwningProcess -EA SilentlyContinue
     [PSCustomObject]@{
         ProcessName = $proc.Name
@@ -67,7 +67,7 @@ foreach ($conn in $extConns) {
         RemoteIP    = $conn.RemoteAddress
         RemotePort  = $conn.RemotePort
     }
-} | Format-Table -AutoSize
+}) | Format-Table -AutoSize
 
 # ----------------------------------------------------------
 Write-Host "[4] PROCESS SIGNATURE VERIFICATION" -ForegroundColor Cyan

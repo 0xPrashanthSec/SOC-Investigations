@@ -31,7 +31,7 @@ $runKeys = @(
     "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run",
     "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
 )
-foreach ($key in $runKeys) {
+$(foreach ($key in $runKeys) {
     Write-Host "  $key" -ForegroundColor DarkCyan
     try {
         $props = Get-ItemProperty -Path $key -EA Stop
@@ -39,7 +39,7 @@ foreach ($key in $runKeys) {
             Where-Object { $_.Name -notlike "PS*" } |
             ForEach-Object { [PSCustomObject]@{Key=$key; Name=$_.Name; Value=$_.Value} }
     } catch { Write-Host "  Key not found or no access." }
-} | Format-Table -AutoSize
+}) | Format-Table -AutoSize
 
 # ----------------------------------------------------------
 Write-Host "[2] SCHEDULED TASKS (non-Microsoft)" -ForegroundColor Cyan
