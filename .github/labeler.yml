@@ -1,0 +1,19 @@
+Windows:
+  - changed-files:
+    - any-glob-to-any-file: 'Windows/**'
+
+Linux:
+  - changed-files:
+    - any-glob-to-any-file: 'Linux/**'
+
+Mac:
+  - changed-files:
+    - any-glob-to-any-file: 'Mac/**'
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: '**/*.md'
+
+CI/CD:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
