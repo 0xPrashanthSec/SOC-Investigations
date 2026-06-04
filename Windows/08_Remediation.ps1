@@ -49,7 +49,7 @@ Write-Host "  ACTION LOG - All changes recorded below" -ForegroundColor Yellow
 
 function Log-Action {
     param([string]$Action, [string]$Detail)
-    $entry = "[$((Get-Date -Format 'HH:mm:ss')] $Action | $Detail"
+    $entry = "[$((Get-Date -Format 'HH:mm:ss'))] $Action | $Detail"
     Write-Host $entry -ForegroundColor Green
     Add-Content -Path "C:\SOC_Remediation_$(Get-Date -Format 'yyyyMMdd').log" -Value $entry
 }
