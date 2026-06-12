@@ -7,14 +7,14 @@
     Parses current auditpol settings, compares against a tiered baseline, outputs a
     color-coded console report, exports a CSV, and optionally generates a remediation script.
 .PARAMETER WhatIf
-    Run analysis and reporting only; skip generation of Fix-AuditPolicy.ps1.
+    Shows what would happen if the script runs without actually generating the Fix-AuditPolicy.ps1 file.
 .EXAMPLE
     .\Get-AuditPolicyAnalysis.ps1
     .\Get-AuditPolicyAnalysis.ps1 -WhatIf
 .NOTES
     Author  : Saiprashanth Pulisetti
     GitHub  : https://github.com/0xPrashanthSec
-    Version : 1.0.0
+    Version : 1.1.0
     Created : 2026-06-12
     License : MIT
 
@@ -25,9 +25,7 @@
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
-param(
-    [switch]$WhatIf
-)
+param()
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -168,9 +166,9 @@ function Get-ComplianceStatus {
 #region -- Main Analysis --
 
 Write-Host ''
-Write-Host '╔═════════════════════════════════════════════════════════════╗' -ForegroundColor Cyan
+Write-Host '╔════════════════════════════════════════════════════════════════╗' -ForegroundColor Cyan
 Write-Host '║         Windows Audit Policy Analyzer  -  CIS / STIG        ║' -ForegroundColor Cyan
-Write-Host '╚═════════════════════════════════════════════════════════════╝' -ForegroundColor Cyan
+Write-Host '╚════════════════════════════════════════════════════════════════╝' -ForegroundColor Cyan
 Write-Host "  Host : $env:COMPUTERNAME" -ForegroundColor Cyan
 Write-Host "  Date : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Cyan
 Write-Host ''
@@ -264,12 +262,12 @@ Write-Host "[+] CSV report saved : $csvPath" -ForegroundColor Green
 
 #region -- Remediation Script Generation --
 
-if (-not $WhatIf) {
-    $fixPath    = Join-Path $PSScriptRoot 'Fix-AuditPolicy.ps1'
-    $fixItems   = $results | Where-Object {
-        $_.Tier -eq 'MUST_ENABLE' -and $_.Status -in 'NOT_CONFIGURED', 'PARTIAL'
-    }
+$fixPath    = Join-Path $PSScriptRoot 'Fix-AuditPolicy.ps1'
+$fixItems   = $results | Where-Object {
+    $_.Tier -eq 'MUST_ENABLE' -and $_.Status -in 'NOT_CONFIGURED', 'PARTIAL'
+}
 
+if ($PSCmdlet.ShouldProcess('Fix-AuditPolicy.ps1', 'Generate remediation script')) {
     $lines = [System.Collections.Generic.List[string]]::new()
     $lines.Add('#Requires -RunAsAdministrator')
     $lines.Add('<#')
