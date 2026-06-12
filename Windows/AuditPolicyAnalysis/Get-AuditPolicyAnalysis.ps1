@@ -130,7 +130,8 @@ function Get-CurrentAuditPolicy {
     $data     = $csvLines[1..($csvLines.Count - 1)]
 
     ($header, $data) -join "`n" | ConvertFrom-Csv |
-        Select-Object @{N='Category';    E={$_.'Category/Subcategory'.Trim()}},
+        Where-Object { $_.'Subcategory' -and $_.'Subcategory'.Trim() -ne '' } |
+        Select-Object @{N='Category';    E={$_.'Policy Target'.Trim()}},
                       @{N='Subcategory'; E={$_.'Subcategory'.Trim()}},
                       @{N='Setting';     E={$_.'Inclusion Setting'.Trim()}}
 }
