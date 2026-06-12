@@ -32,7 +32,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-#region ── Baseline Definition ────────────────────────────────────────────────
+#region -- Baseline Definition --
 
 # Values: 'Success and Failure' | 'Success' | 'Failure' | 'No Auditing'
 $Baseline = @{
@@ -81,7 +81,7 @@ $Baseline = @{
     }
 
     CONDITIONAL = @{
-        # Object Access — enable if file-server / DLP scope
+        # Object Access - enable if file-server / DLP scope
         'File System'                       = 'Success and Failure'
         'Registry'                          = 'Success and Failure'
         'Kernel Object'                     = 'Success and Failure'
@@ -94,7 +94,7 @@ $Baseline = @{
         'Removable Storage'                 = 'Success and Failure'
         'Central Access Policy Staging'     = 'Failure'
 
-        # DS Access — enable on Domain Controllers
+        # DS Access - enable on Domain Controllers
         'Directory Service Access'          = 'Failure'
         'Directory Service Changes'         = 'Success'
         'Directory Service Replication'     = 'No Auditing'
@@ -118,7 +118,7 @@ $Baseline = @{
 
 #endregion
 
-#region ── Helpers ────────────────────────────────────────────────────────────
+#region -- Helpers --
 
 function Get-CurrentAuditPolicy {
     $raw = auditpol /get /category:* /r 2>&1
@@ -165,12 +165,12 @@ function Get-ComplianceStatus {
 
 #endregion
 
-#region ── Main Analysis ──────────────────────────────────────────────────────
+#region -- Main Analysis --
 
 Write-Host ''
-Write-Host '╔══════════════════════════════════════════════════════════════╗' -ForegroundColor Cyan
-Write-Host '║         Windows Audit Policy Analyzer  —  CIS / STIG        ║' -ForegroundColor Cyan
-Write-Host '╚══════════════════════════════════════════════════════════════╝' -ForegroundColor Cyan
+Write-Host '╔═════════════════════════════════════════════════════════════╗' -ForegroundColor Cyan
+Write-Host '║         Windows Audit Policy Analyzer  -  CIS / STIG        ║' -ForegroundColor Cyan
+Write-Host '╚═════════════════════════════════════════════════════════════╝' -ForegroundColor Cyan
 Write-Host "  Host : $env:COMPUTERNAME" -ForegroundColor Cyan
 Write-Host "  Date : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Cyan
 Write-Host ''
@@ -206,13 +206,13 @@ $results = foreach ($entry in $currentPolicy) {
 
 #endregion
 
-#region ── Console Report ─────────────────────────────────────────────────────
+#region -- Console Report --
 
 $grouped = $results | Group-Object Category | Sort-Object Name
 
 foreach ($group in $grouped) {
     Write-Host ''
-    Write-Host "  ── $($group.Name) ──" -ForegroundColor Cyan
+    Write-Host "  -- $($group.Name) --" -ForegroundColor Cyan
 
     foreach ($item in $group.Group | Sort-Object Subcategory) {
         $color = switch ($item.Status) {
@@ -231,7 +231,7 @@ foreach ($group in $grouped) {
 
 #endregion
 
-#region ── Summary Counts ─────────────────────────────────────────────────────
+#region -- Summary Counts --
 
 Write-Host ''
 Write-Host '╔══════════════════════════════╗' -ForegroundColor Cyan
@@ -253,7 +253,7 @@ Write-Host ''
 
 #endregion
 
-#region ── CSV Export ─────────────────────────────────────────────────────────
+#region -- CSV Export --
 
 $date      = Get-Date -Format 'yyyyMMdd'
 $csvPath   = Join-Path $PSScriptRoot "AuditPolicy_Report_$($env:COMPUTERNAME)_$date.csv"
@@ -262,7 +262,7 @@ Write-Host "[+] CSV report saved : $csvPath" -ForegroundColor Green
 
 #endregion
 
-#region ── Remediation Script Generation ─────────────────────────────────────
+#region -- Remediation Script Generation --
 
 if (-not $WhatIf) {
     $fixPath    = Join-Path $PSScriptRoot 'Fix-AuditPolicy.ps1'
@@ -274,7 +274,7 @@ if (-not $WhatIf) {
     $lines.Add('#Requires -RunAsAdministrator')
     $lines.Add('<#')
     $lines.Add('.SYNOPSIS')
-    $lines.Add('    Auto-generated remediation script — apply missing MUST_ENABLE audit settings.')
+    $lines.Add('    Auto-generated remediation script - apply missing MUST_ENABLE audit settings.')
     $lines.Add(".NOTES")
     $lines.Add("    Generated : $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  Host : $env:COMPUTERNAME")
     $lines.Add('#>')
@@ -290,7 +290,7 @@ if (-not $WhatIf) {
             'Failure'             { '/success:disable /failure:enable' }
             default               { '/success:disable /failure:disable' }
         }
-        $lines.Add("# [$($item.Status)] $($item.Subcategory) — was: $($item.Current)")
+        $lines.Add("# [$($item.Status)] $($item.Subcategory) - was: $($item.Current)")
         $lines.Add("auditpol /set /subcategory:`"$($item.Subcategory)`" $flag")
         $lines.Add('')
     }
@@ -300,9 +300,9 @@ if (-not $WhatIf) {
     $lines | Set-Content -Path $fixPath -Encoding UTF8
 
     if ($fixItems.Count -gt 0) {
-        Write-Host "[+] Remediation script saved : $fixPath  ($($fixItems.Count) item(s))" -ForegroundColor Green
+        Write-Host "[+] Remediation script saved : $fixPath  ($($fixItems.Count) items)" -ForegroundColor Green
     } else {
-        Write-Host '[+] No MUST_ENABLE gaps found — remediation script is a no-op.' -ForegroundColor Green
+        Write-Host '[+] No MUST_ENABLE gaps found - remediation script is a no-op.' -ForegroundColor Green
     }
 } else {
     Write-Host '[-] WhatIf: remediation script generation skipped.' -ForegroundColor Yellow
