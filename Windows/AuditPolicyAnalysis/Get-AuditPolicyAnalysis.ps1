@@ -11,6 +11,17 @@
 .EXAMPLE
     .\Get-AuditPolicyAnalysis.ps1
     .\Get-AuditPolicyAnalysis.ps1 -WhatIf
+.NOTES
+    Author  : Saiprashanth Pulisetti
+    GitHub  : https://github.com/0xPrashanthSec
+    Version : 1.0.0
+    Created : 2026-06-12
+    License : MIT
+
+    References:
+      - CIS Benchmark for Windows Server 2022 (v2.0.0)
+      - DISA STIG for Windows Server 2022 (V2R2)
+      - Microsoft Security Compliance Toolkit
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
