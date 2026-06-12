@@ -24,7 +24,7 @@
       - Microsoft Security Compliance Toolkit
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding()]
 param(
     [switch]$WhatIf
 )
